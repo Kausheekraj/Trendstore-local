@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendstore
+  template:
+    metadata:
+      labels:
+        app: trendstore
+    spec:
+      containers:
+        - name: trendstore-local
+          image: kausheekraj/trendstore-nginx:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi

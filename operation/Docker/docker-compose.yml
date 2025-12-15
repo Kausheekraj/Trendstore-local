@@ -1,0 +1,9 @@
+services:
+  web:
+    build:
+      context: ../../
+      dockerfile: operation/Docker/dockerfile
+    ports:
+      - "3000:80"
+    image: kausheekraj/trendstore-nginx:latest
+    container_name: Trend-store

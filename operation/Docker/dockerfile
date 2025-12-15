@@ -1,0 +1,6 @@
+FROM nginx:alpine AS trend 
+RUN rm -rf /usr/share/nginx/html/*
+COPY application/dist /usr/share/nginx/html
+EXPOSE 80
+
+
