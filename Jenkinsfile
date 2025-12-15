@@ -26,7 +26,12 @@ pipeline {
         }
         stage('Push Image') {
            steps {
-               sh "${SCRIPT_DIR}/compose.sh -p"
+                withCredentials([string(credentialsId: 'dockerhub-pat', variable: 'DOCKERHUB_PAT')]) {
+                    sh '''
+                        echo $DOCKERHUB_PAT | docker login -u kausheekraj --password-stdin
+                        ${SCRIPT_DIR}/compose.sh -p
+                      '''
+                     
            }
         }
 
