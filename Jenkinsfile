@@ -24,13 +24,16 @@ pipeline {
                 sh "${SCRIPT_DIR}/compose.sh -b"
             }
         }
-        stage('Push Image') {
-    steps {
+       stage('Push Image') {
+           steps {
         withCredentials([string(credentialsId: 'DOCKERHUB_PAT', variable: 'DOCKER_PAT')]) {
-            sh 'echo $DOCKER_PAT | docker login -u kausheekraj --password-stdin && ${SCRIPT_DIR}/compose.sh -p'
+            sh """
+                echo $DOCKER_PAT | docker login -u kausheekraj --password-stdin
+                ${SCRIPT_DIR}/compose.sh -p
+            """
         }
-      }
-   }
+    }
+}
 
 
         stage('Deploy Container') {
