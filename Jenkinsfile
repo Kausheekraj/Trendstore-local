@@ -45,7 +45,14 @@ pipeline {
                 script {
                     sleep 10
                 }
-                sh "curl -I http://localhost:3000 || true"
+                sh """
+                kubectl get pods 
+                kubectl get deploy
+                kubectl get svc
+                kubectl get hpa
+                script { sleep 10 }
+                curl -I http://localhost:3000 || true
+                """
             }
         }
     }
