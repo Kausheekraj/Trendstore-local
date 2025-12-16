@@ -46,7 +46,7 @@ pipeline {
                 
                 sh """
                  kubectl port-forward deployment/trendstore 3000:3000 >/tmp/pf.log 2>&1 &
-                  PF_PID=$!
+                  PF_PID=\$!
 
                 sleep 10
                 kubectl get pods 
@@ -54,7 +54,7 @@ pipeline {
                 kubectl get svc
                 kubectl get hpa
                 curl -I http://localhost:3000 || true
-                kill $PF_PID
+                kill \$PF_PID
                 """
             }
         }
