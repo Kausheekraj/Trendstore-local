@@ -28,6 +28,7 @@ pipeline {
            steps {
             sh """
                 ${SCRIPT_DIR}/compose.sh -p
+                 minikube image load kausheekraj/trendstore-nginx:latest
             """
         }
     }
@@ -42,8 +43,9 @@ pipeline {
 
         stage('Health Check') {
             steps {
-                script {sleep 10}
+                
                 sh """
+                sleep 10
                 kubectl get pods 
                 kubectl get deploy
                 kubectl get svc
