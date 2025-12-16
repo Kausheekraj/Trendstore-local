@@ -43,7 +43,7 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    sleep 5
+                    sleep 10
                 }
                 sh "curl -I http://localhost:3000 || true"
             }
