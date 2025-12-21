@@ -18,11 +18,6 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
-            steps {
-                sh "${SCRIPT_DIR}/compose.sh -b"
-            }
-        }
     stage('Push Image') {
     steps {
         script {
