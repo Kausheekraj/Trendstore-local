@@ -2,8 +2,8 @@
 #!/usr/bin/env bash
 set -e
 base_image="kausheekraj/trendstore-nginx"
-
-# Parse arguments
+mode=""
+# parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
     b|build) mode='build' ;;
@@ -12,16 +12,16 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-date_tag=$(date +'%Y%m%d-%H%M')
+date_tag=$(date +'%y%m%d-%h%m')
 date_image="$base_image:$date_tag"
 
 case "$mode" in
   build)
-    echo "Building new app image"
+    echo "building new app image"
     docker compose build --no-cache
     ;;
   push)
-    echo "Pushing image"
+    echo "pushing image"
     docker tag "$base_image:latest" "$date_image"
     docker push "$date_image"
     docker push "$base_image:latest"
