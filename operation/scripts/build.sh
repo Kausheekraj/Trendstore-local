@@ -12,7 +12,7 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-date_tag=$(date +'%y%m%d-%h%m')
+date_tag=$(date +'%y%m%d-%H%M')
 date_image="$base_image:$date_tag"
 
 case "$mode" in

@@ -2,7 +2,6 @@ pipeline {
     agent any
     environment {
         SCRIPT_DIR = "operation/scripts"
-        DOCKER_CREDS = "docker_pat"
     }
 
     stages {
@@ -24,23 +23,19 @@ pipeline {
                 sh "${SCRIPT_DIR}/compose.sh -b"
             }
         }
-       stage('Push Image') {
-           steps {
-               script{
-               docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDS) {
-
-            sh """
-                ${SCRIPT_DIR}/compose.sh -p
-                 minikube image load kausheekraj/trendstore-nginx:latest
-            """
-                }
-              }
+    stage('Push Image') {
+    steps {
+        script {
+            docker.withRegistry('https://index.docker.io/v1/', 'docker_pat') {
+                sh """
+                    ${SCRIPT_DIR}/compose.sh -p
+                    minikube image load kausheekraj/trendstore-nginx:latest
+                """
+            }
         }
     }
-
-
-
-        stage('Deploy Container') {
+}
+         stage('Deploy Container') {
             steps {
                 sh "${SCRIPT_DIR}/compose.sh -d"
             }
