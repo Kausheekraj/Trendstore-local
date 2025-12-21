@@ -17,6 +17,13 @@ pipeline {
                 sh "chmod +x ${SCRIPT_DIR}/*.sh"
             }
         }
+        stage('Build image') {
+          steps {
+             sh """
+             ${SCRIPT_DIR}/compose.sh -b
+             """
+          }
+        }
 
     stage('Push Image') {
     steps {
