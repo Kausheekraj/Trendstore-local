@@ -34,6 +34,7 @@ for arg in "$@"; do
   [[ "$arg" == "--help" ]] && usage
 done
 
+[[ $# -eq 0 ]] && usage
 while getopts "pbdsrh" opts; do
   case "$opts" in
     b) (cd "$DOCKER_DIR" && bash "$SCRIPTS_DIR/build.sh" b )  ;;
@@ -46,4 +47,4 @@ while getopts "pbdsrh" opts; do
   esac
 done
 
-[[ $# -eq 0 ]] && usage
+exit 0

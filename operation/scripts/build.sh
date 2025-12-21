@@ -27,3 +27,4 @@ case "$mode" in
     docker push "$base_image:latest"
     ;;
 esac
+exit 0
