@@ -32,14 +32,14 @@ variable "node_instance_type" {
 }
 
 variable "desired_nodes" {
-  default = 2
+  default = 0
 }
 
 variable "min_nodes" {
-  default = 1
+  default = 0
 }
 
 variable "max_nodes" {
-  default = 5
+  default = 1
 }
 
