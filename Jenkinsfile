@@ -1,11 +1,7 @@
 pipeline {
     agent any
-
     environment {
-        SCRIPT_DIR   = "operation/scripts"
-        AWS_REGION   = "us-east-2"
-        CLUSTER_NAME = "trendstore-eks"
-        AWS_CREDS_ID = "aws-creds-id"
+        SCRIPT_DIR = "operation/scripts"
     }
 
     stages {
@@ -26,7 +22,9 @@ pipeline {
 
         stage('Build image') {
             steps {
-                sh "${SCRIPT_DIR}/compose.sh -b"
+                sh """
+                ${SCRIPT_DIR}/compose.sh -b
+                """
             }
         }
 
@@ -34,7 +32,9 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'docker_pat') {
-                        sh "${SCRIPT_DIR}/compose.sh -p"
+                        sh """
+                        ${SCRIPT_DIR}/compose.sh -p
+                        """
                     }
                 }
             }
@@ -43,12 +43,10 @@ pipeline {
         stage('Configure Kubeconfig for EKS') {
             steps {
                 script {
-                    // Use withAWS *inside* steps + script
-                    withAWS(credentials: AWS_CREDS_ID, region: AWS_REGION) {
+                    // requires AWS Steps plugin + Jenkins credential id 'aws-creds-id' [web:6]
+                    withAWS(credentials: 'aws-creds-id', region: 'us-east-2') {
                         sh """
-                        aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_REGION}
-                        kubectl get nodes -o wide
-                        echo "✅ EKS kubeconfig configured"
+                        aws eks update-kubeconfig --name trendstore-eks --region us-east-2
                         """
                     }
                 }
@@ -63,63 +61,45 @@ pipeline {
 
         stage('Monitoring Setup') {
             steps {
-                script {
-                    sh '''
-                    # Add/Update Helm repo for Prometheus stack
-                    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
-                    helm repo update
-
-                    # Install/upgrade kube-prometheus-stack in monitoring namespace
-                    helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
-                      --namespace monitoring --create-namespace
-                    '''
-                }
+                sh """
+                helm repo add prometheus-community https://prometheus-community.github.io/helm-charts || true
+                helm repo update
+                helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+                  --namespace monitoring --create-namespace
+                """
             }
         }
 
         stage('Health Check') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh '''
-                    echo "=== Kubernetes objects ==="
+                    sh """
                     kubectl get nodes -o wide
                     kubectl get pods -n default -l app=trendstore
-                    kubectl get svc -n default
-                    kubectl get hpa trendstore-hpa -n default || true
+                    kubectl get hpa trendstore-hpa
 
-                    echo "=== Prometheus health check ==="
-                    kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090 >/tmp/prom_pf.log 2>&1 &
-                    PF_PID=$!
-
-                    sleep 10
-
-                    curl -s "http://localhost:9090/api/v1/query?query=up{job=~\\\"kubelet|kube-state-metrics\\\"}" | grep '"value"' || true
+                    kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090 >${WORKSPACE}/prom_pf.log 2>&1 &
+                    PF_PID=\$!
+                    sleep 5
+                    curl -s "http://localhost:9090/api/v1/query?query=up{job=~'kubelet|kube-state-metrics'}" | grep '"value"' || true
                     echo "Prometheus health check stage completed"
-
-                    kill $PF_PID || true
-                    '''
+                    kill \$PF_PID || true
+                    """
                 }
             }
         }
 
-        stage('Grafana Dashboard') {
+        stage('grafana dashboard') {
             steps {
-                script {
-                    sh '''
-                    echo "=== Checking Grafana dashboard ==="
-                    kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80 >/tmp/grafana_pf.log 2>&1 &
-                    GF_PID=$!
-
-                    sleep 10
-
-                    # Note: orgId (capital I), Prometheus datasource name is usually 'Prometheus'
-                    curl -s "http://localhost:3000/d/6417/k8s-cluster?orgId=1&from=now-1h&to=now&var-ds_prometheus=Prometheus&var-cluster=&var-namespace=default&var-job=&var-pod=trendstore" >/dev/null || true
-
-                    echo "✅ Grafana dashboard accessible at http://localhost:3000/d/6417/k8s-cluster?orgId=1&var-namespace=default&var-pod=trendstore"
-
-                    kill $GF_PID || true
-                    '''
-                }
+                sh """
+                kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80 > ${WORKSPACE}/grafana_pf.log 2>&1 &
+                GF_PID=\$!
+                sleep 5
+                # orgId must have capital I, datasource usually named 'Prometheus' [web:41][web:25]
+                curl -s "http://localhost:3000/d/6417/k8s-cluster?orgId=1&from=now-1h&to=now&var-ds_prometheus=Prometheus&var-cluster=&var-namespace=default&var-job=&var-pod=trendstore" >/dev/null || true
+                echo "grafana dashboard accessible at port-forward:3000/d/6417"
+                kill \$GF_PID || true
+                """
             }
         }
     }
