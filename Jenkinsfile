@@ -40,24 +40,11 @@ pipeline {
             }
         }
         stage('Configure Kubeconfig for EKS') {
-            steps {
-              script {
-               echo ">>> DEBUG: entering Configure Kubeconfig for EKS"
-                withAWS(credentials: 'aws-creds-id', region: 'us-east-2') {
-                sh '''
-                set -eux
-                echo ">>> AWS identity"
-                aws sts get-caller-identity || echo "aws sts failed"
-
-                echo ">>> Updating kubeconfig"
-                aws eks update-kubeconfig --name trendstore-eks --region us-east-2
-
-                echo ">>> kubectl get nodes"
-                kubectl get nodes -o wide || echo "kubectl failed"
-                '''
-            }
+           steps {
+            sh """
+              aws eks update-kubeconfig --name trendstore-eks --region us-east-2
+            """
         }
-    }
 }
 
         stage('Deploy Container') {
